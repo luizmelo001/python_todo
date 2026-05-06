@@ -1,6 +1,7 @@
 {% extends 'layout.html' %}
 
 {% block content %}
+
   {% if lists %}
     <ul id="lists">
         {% for list in lists %}
@@ -16,5 +17,5 @@
 {% endblock %}
 
 {% block header_links %}
-  <a class="add" href="/lists/new">New List</a>
+  <a class="add" href="{{ url_for('add_todo_list') }}">New List</a>
 {% endblock %}

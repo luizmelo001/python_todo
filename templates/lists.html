@@ -1,15 +1,16 @@
 {% extends 'layout.html' %}
 
 {% block content %}
-
   {% if lists %}
     <ul id="lists">
-        {% for list in lists %}
-            <li class="list">
-                <a href="/lists/{{ loop.index }}">{{ list.title }}</a>
-                <p>{{ list.todos|length }}</p>
-            </li>
-        {% endfor %}
+      {% for lst in lists %}
+        <li>
+          <a href="{{ url_for('show_list', list_id=lst.id) }}">
+            <h2>{{ lst.title }}</h2>
+            <p>{{ lst.todos | length }} items</p>
+          </a>
+        </li>
+      {% endfor %}
     </ul>
   {% else %}
     <p id="no_list">You don't have any todo lists. Why not create one?</p>

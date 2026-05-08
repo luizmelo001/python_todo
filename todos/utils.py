@@ -23,6 +23,11 @@ def mark_all_completed(todos):
     for todo in todos:
         todo['completed'] = True
 
+# Deletes a todo item by its ID from the specified list
 def delete_todo_by_id(lst, todo_id):
     lst['todos'] = [todo for todo in lst['todos'] if todo['id'] != todo_id]
-    
+
+# Delete a todo list by its ID
+def delete_list_by_id(lists, list_id):
+    lists[:] = [lst for lst in lists if lst['id'] != list_id]
+

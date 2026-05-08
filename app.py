@@ -6,7 +6,8 @@ from todos.utils import (
     error_for_todo,
     find_todo_by_id,
     mark_all_completed,
-    delete_todo_by_id
+    delete_todo_by_id,
+    delete_list_by_id,
 )
 
 from flask import (
@@ -148,7 +149,44 @@ def delete_todo(list_id, todo_id):
     flash("Todo item deleted successfully!", "success")     
     return redirect(url_for('show_list', list_id=list_id))
 
+# Edit a todo list's title
+@app.route("/lists/<list_id>/edit", methods=["GET", "POST"])
+def edit_list(list_id):
+    lst = find_list_by_id(list_id, session['lists'])
+    if not lst:
+        raise NotFound(description='List not found')
 
+    if request.method == "POST":
+        new_title = request.form["list_title"].strip()
+        error = error_for_list_title(new_title, session['lists'])
+        
+        if error:
+            flash(error, "error")
+            return render_template('edit_list.html', lst=lst)
+
+        # Check for duplicate titles (case-insensitive)
+        if any(other_lst['id'] != list_id and other_lst['title'].lower() == new_title.lower() for other_lst in session['lists']):
+            flash("A list with this title already exists!", "error")
+            return render_template('edit_list.html', lst=lst)
+
+        lst['title'] = new_title
+        session.modified = True
+        flash("List updated successfully!", "success")
+        return redirect(url_for('get_lists'))
+
+    return render_template('edit_list.html', lst=lst)
+
+# Delete a todo list
+@app.route("/lists/<list_id>/delete", methods=["POST"])
+def delete_list(list_id):
+    lst = find_list_by_id(list_id, session['lists'])
+    if not lst:
+        raise NotFound(description='List not found')
+    
+    delete_list_by_id(session['lists'], list_id)
+    session.modified = True
+    flash("List deleted successfully!", "success")
+    return redirect(url_for('get_lists'))
 
 
 if __name__ == "__main__":

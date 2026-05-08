@@ -1,6 +1,13 @@
 from uuid import uuid4
 from werkzeug.exceptions import NotFound
-from todos.utils import error_for_list_title, find_list_by_id, error_for_todo
+from todos.utils import (
+    error_for_list_title, 
+    find_list_by_id,
+    error_for_todo,
+    find_todo_by_id,
+    mark_all_completed,
+    delete_todo_by_id
+)
 
 from flask import (
     flash,
@@ -102,6 +109,46 @@ def create_todo(list_id):
 
     #Redirect back to the list page to show the updated list with the new todo item
     return redirect(url_for('show_list', list_id=list_id))
+
+# Mark a todo item as completed or not completed
+@app.route("/lists/<list_id>/todos/<todo_id>/toggle", methods=["POST"])
+def update_todo_status(list_id, todo_id):
+    lst = find_list_by_id(list_id, session['lists'])
+    if not lst:
+        raise NotFound(description='List not found')
+
+    todo = find_todo_by_id(todo_id, lst['todos'])
+    if not todo:
+        raise NotFound(description='Todo item not found')
+
+    todo['completed'] = (request.form.get("completed") == "True")
+    session.modified = True
+    return redirect(url_for('show_list', list_id=list_id))
+
+# Mark all todo items in a list as completed
+@app.route("/lists/<list_id>/todos/complete_all", methods=["POST"])
+def complete_all_todos(list_id):
+    lst = find_list_by_id(list_id, session['lists'])
+    if not lst:
+        raise NotFound(description='List not found')
+
+    mark_all_completed(lst['todos'])
+    session.modified = True
+    return redirect(url_for('show_list', list_id=list_id))
+
+# Delete a todo item from a list
+@app.route("/lists/<list_id>/todos/<todo_id>/delete", methods=["POST"])
+def delete_todo(list_id, todo_id):
+    lst = find_list_by_id(list_id, session['lists'])
+    if not lst:
+        raise NotFound(description='List not found')
+    
+    delete_todo_by_id(lst, todo_id)
+    session.modified = True
+    flash("Todo item deleted successfully!", "success")     
+    return redirect(url_for('show_list', list_id=list_id))
+
+
 
 
 if __name__ == "__main__":

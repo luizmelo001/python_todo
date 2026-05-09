@@ -8,6 +8,9 @@ from todos.utils import (
     mark_all_completed,
     delete_todo_by_id,
     delete_list_by_id,
+    todos_completed,
+    todos_remaining,
+    is_list_completed,
 )
 
 from flask import (
@@ -23,6 +26,12 @@ from flask import (
 app = Flask(__name__)
 app.secret_key = 'secret1'
 
+@app.context_processor
+def list_utilities_processor():
+    return dict(
+        is_list_completed=is_list_completed,
+    )
+
 @app.before_request
 def initialize_session():
     if 'lists' not in session:
@@ -36,12 +45,16 @@ def index():
 # Show all todo lists
 @app.route("/lists")
 def get_lists():
-    return render_template("lists.html", lists=session['lists'])
+    return render_template('lists.html',
+                           lists=session['lists'],
+                           todos_completed=todos_completed,
+                           todos_remaining=todos_remaining)
 
 # Show a specific todo list and its todos
 @app.route("/lists/<list_id>")
 def show_list(list_id):
     lst = find_list_by_id(list_id, session['lists'])
+    
     if not lst:
         raise NotFound(description="List not found")
     return render_template("list.html", lst=lst)

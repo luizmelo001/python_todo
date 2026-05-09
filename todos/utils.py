@@ -31,3 +31,11 @@ def delete_todo_by_id(lst, todo_id):
 def delete_list_by_id(lists, list_id):
     lists[:] = [lst for lst in lists if lst['id'] != list_id]
 
+def todos_completed(lst):
+    return sum(1 for todo in lst['todos'] if todo['completed'])
+
+def todos_remaining(lst):
+    return sum(1 for todo in lst['todos'] if not todo['completed'])
+
+def is_list_completed(lst):
+    return len(lst['todos']) > 0 and todos_remaining(lst) == 0

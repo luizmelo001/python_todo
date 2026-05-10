@@ -104,20 +104,13 @@ def create_todo_list():
         flash(error, "error")
         return render_template('new_list.html', title=title)
 
-    # Check for duplicate titles (case-insensitive)
-    if any(lst['title'].lower() == title.lower() for lst in session['lists']):
-        flash("A list with this title already exists!", "error")
-        return render_template('new_list.html', title=title) #← Stores and sends the title to the template for pre-filling the form
-    
-    if 1 <= len(title) <= 100:
-        session["lists"].append({
-            "id": str(uuid4()),
-            "title": title,
-            "todos": []
-        })
-    else:
-        flash("Title must be between 1 and 100 characters!", "error")
-        return render_template('new_list.html', title=title)  # ← Stores and sends the title to the template for pre-filling the form
+    # Add the new list to the session's lists
+    session["lists"].append({
+        "id": str(uuid4()),
+        "title": title,
+        "todos": []
+    }) 
+
     session.modified = True
     flash("List created successfully!", "success")
     return redirect(url_for('get_lists'))
@@ -151,14 +144,10 @@ def create_todo(lst):
 # Mark a todo item as completed or not completed
 @app.route("/lists/<list_id>/todos/<todo_id>/toggle", methods=["POST"])
 @require_todo
-def update_todo_status(lst, todo_id):
-    todo = find_todo_by_id(todo_id, lst['todos'])
-    if not todo:
-        raise NotFound(description='Todo item not found')
-
+def update_todo_status(lst, todo):
     todo['completed'] = (request.form.get("completed") == "True")
     session.modified = True
-    return redirect(url_for('show_list', list_id=list_id))
+    return redirect(url_for('show_list', list_id=lst['id']))
 
 # Mark all todo items in a list as completed
 @app.route("/lists/<list_id>/todos/complete_all", methods=["POST"])
@@ -166,13 +155,14 @@ def update_todo_status(lst, todo_id):
 def complete_all_todos(lst):
     mark_all_completed(lst['todos'])
     session.modified = True
-    return redirect(url_for('show_list', list_id=list_id))
+    return redirect(url_for('show_list', list_id=lst['id']))
 
 # Delete a todo item from a list
 @app.route("/lists/<list_id>/todos/<todo_id>/delete", methods=["POST"])
 @require_todo
-def delete_todo(lst, todo_id):
-    delete_todo_by_id(lst, todo_id)
+def delete_todo(lst, todo):
+    # Remove the todo item from the list's todos
+    lst['todos'].remove(todo)
     session.modified = True
     flash("Todo item deleted successfully!", "success")     
     return redirect(url_for('show_list', list_id=lst['id']))
@@ -190,7 +180,7 @@ def edit_list(lst):
             return render_template('edit_list.html', lst=lst)
 
         # Check for duplicate titles (case-insensitive)
-        if any(other_lst['id'] != list_id and other_lst['title'].lower() == new_title.lower() for other_lst in session['lists']):
+        if any(other_lst['id'] != lst['id'] and other_lst['title'].lower() == new_title.lower() for other_lst in session['lists']):
             flash("A list with this title already exists!", "error")
             return render_template('edit_list.html', lst=lst)
 
